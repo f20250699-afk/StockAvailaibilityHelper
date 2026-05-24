@@ -2,7 +2,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
-# The URL we actually want to check
+# The URL we want to check
 AMUL_URL = "https://shop.amul.com/en/product/amul-high-protein-rose-lassi-200-ml-or-pack-of-30" 
 
 # Our secret vault keys
@@ -10,16 +10,17 @@ DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 SCRAPER_API_KEY = os.environ.get("SCRAPER_API_KEY")
 
 def check_stock():
-    print("Asking ScraperAPI to check Amul using a residential proxy...")
+    print("Asking ScraperAPI to check Amul using an Indian residential proxy...")
     
-    # We send our target URL to ScraperAPI instead of going directly to Amul
     payload = {
         'api_key': SCRAPER_API_KEY,
         'url': AMUL_URL,
-        'render': 'true' # Tells ScraperAPI to wait for the JavaScript text to load
+        'render': 'true',        # Tells ScraperAPI to wait for the JavaScript text to load
+        'country_code': 'in'     # 🇮🇳 Route through India to bypass Amul's geo-fence!
     }
     
-    response = requests.get('https://api.scraperapi.com/', params=payload)
+    # Hit the ScraperAPI base endpoint directly
+    response = requests.get('https://api.scraperapi.com', params=payload)
     
     if response.status_code != 200:
         print(f"Proxy Error: Status code {response.status_code}")
