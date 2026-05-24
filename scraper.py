@@ -1,50 +1,52 @@
 import os
-import cloudscraper
 import requests
 from bs4 import BeautifulSoup
 
-URL = "https://shop.amul.com/en/product/amul-high-protein-rose-lassi-200-ml-or-pack-of-30" 
+# The URL we actually want to check
+AMUL_URL = "https://shop.amul.com/en/product/amul-high-protein-rose-lassi-200-ml-or-pack-of-30" 
+
+# Our secret vault keys
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
+SCRAPER_API_KEY = os.environ.get("SCRAPER_API_KEY")
 
 def check_stock():
-    print("Putting on our VIP disguise (Cloudscraper) to bypass Amul's bouncers...")
+    print("Asking ScraperAPI to check Amul using a residential proxy...")
     
-    # Create a scraper that perfectly mimics a real Chrome browser on Windows
-    scraper = cloudscraper.create_scraper(browser={
-        'browser': 'chrome',
-        'platform': 'windows',
-        'mobile': False
-    })
+    # We send our target URL to ScraperAPI instead of going directly to Amul
+    payload = {
+        'api_key': SCRAPER_API_KEY,
+        'url': AMUL_URL,
+        'render': 'true' # Tells ScraperAPI to wait for the JavaScript text to load
+    }
     
-    response = scraper.get(URL)
+    response = requests.get('https://api.scraperapi.com/', params=payload)
     
     if response.status_code != 200:
-        print(f"Error accessing site: Status code {response.status_code}")
+        print(f"Proxy Error: Status code {response.status_code}")
         return
 
     soup = BeautifulSoup(response.text, 'html.parser')
     page_text = soup.get_text().lower()
 
     char_count = len(page_text)
-    print(f"Webpage data fetched. Total character count: {char_count}")
+    print(f"Webpage data fetched via proxy. Total character count: {char_count}")
 
     if char_count < 1000:
-        print("Uh oh, character count is still suspiciously low. The bouncer caught us.")
+        print("Bouncer still caught us, or page didn't render fully.")
         return
 
-    # Check for the stock text
     if "sold out" in page_text or "out of stock" in page_text:
-        print("Verification: Found stock restriction text. Item is still unavailable. Standing down.")
+        print("Verification: Item is still Sold Out. Standing down.")
     else:
-        print("🚀 TEXT LOADED AND ITEM IN STOCK! Sending Discord Notification...")
+        print("🚀 TEXT LOADED AND ITEM IN STOCK! Firing Discord Alert! 🚨")
         send_discord_alert()
 
 def send_discord_alert():
     if not DISCORD_WEBHOOK:
-        print("Error: DISCORD_WEBHOOK environment variable is empty!")
+        print("Error: Webhook link missing.")
         return
     payload = {
-        "content": f"🚀 **Amul stock update!** The High-Protein Rose Lassi is back! Check here: {URL}"
+        "content": f"🚀 **Amul stock update!** The High-Protein Rose Lassi is back! Check here: {AMUL_URL}"
     }
     requests.post(DISCORD_WEBHOOK, json=payload)
     print("Discord alert fired!")
