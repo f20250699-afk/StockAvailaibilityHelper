@@ -10,13 +10,12 @@ DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 SCRAPER_API_KEY = os.environ.get("SCRAPER_API_KEY")
 
 def check_stock():
-    print("Asking ScraperAPI to check Amul using an Indian residential proxy...")
+    print("Asking ScraperAPI to check Amul without triggering browser detection...")
     
     payload = {
         'api_key': SCRAPER_API_KEY,
         'url': AMUL_URL,
-        'render': 'true',        # Tells ScraperAPI to wait for the JavaScript text to load
-        'country_code': 'in'     # 🇮🇳 Route through India to bypass Amul's geo-fence!
+        'country_code': 'in'     # 🇮🇳 Route through India, but NO render flag!
     }
     
     # Hit the ScraperAPI base endpoint directly
