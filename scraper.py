@@ -1,53 +1,55 @@
 import os
+import cloudscraper
 import requests
+from bs4 import BeautifulSoup
 
-# We are hitting their internal data system directly for this product ID
-URL = "https://shop.amul.com/api/v1/en/products/amul-high-protein-rose-lassi-200-ml-or-pack-of-30"
+# Back to the actual product page
+URL = "https://shop.amul.com/en/product/amul-high-protein-rose-lassi-200-ml-or-pack-of-30" 
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 
 def check_stock():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
+    print("Putting on our VIP disguise (Cloudscraper) to bypass Amul's bouncers...")
     
-    print("Querying Amul's backend stock database...")
-    response = requests.get(URL, headers=headers)
+    # Create a scraper that perfectly mimics a real Chrome browser on Windows
+    scraper = cloudscraper.create_scraper(browser={
+        'browser': 'chrome',
+        'platform': 'windows',
+        'mobile': False
+    })
+    
+    response = scraper.get(URL)
     
     if response.status_code != 200:
-        print(f"Error accessing database: Status code {response.status_code}")
+        print(f"Error accessing site: Status code {response.status_code}")
         return
 
-    # Amul sends clean data back. Let's look inside it.
-    data = response.json()
-    
-    # Extract the product status directly from their system
-    try:
-        product_info = data.get("data", {}).get("product", {})
-        title = product_info.get("title", "Product")
-        is_sold_out = product_info.get("isSoldOut", False)
-        
-        print(f"Successfully checked data for: {title}")
-        
-        if is_sold_out:
-            print("System Confirmation: Item status is officially 'SOLD OUT'. Standing down.")
-        else:
-            print("🚨 ACTUAL STOCK DETECTED! Firing true alert to Discord! 🚨")
-            send_discord_alert(title)
-            
-    except Exception as e:
-        print(f"Could not parse the website data layout. Error details: {e}")
+    soup = BeautifulSoup(response.text, 'html.parser')
+    page_text = soup.get_text().lower()
 
-def send_discord_alert(item_title):
+    # Diagnostic check: Let's see if we actually got the full page this time
+    char_count = len(page_text)
+    print(f"Webpage data fetched. Total character count: {char_count}")
+
+    if char_count < 1000:
+        print("Uh oh, character count is still suspiciously low. The bouncer caught us.")
+        return
+
+    # Check for the stock text
+    if "sold out" in page_text or "out of stock" in page_text:
+        print("Verification: Found stock restriction text. Item is still unavailable. Standing down.")
+    else:
+        print("🚀 TEXT LOADED AND ITEM IN STOCK! Sending Discord Notification...")
+        send_discord_alert()
+
+def send_discord_alert():
     if not DISCORD_WEBHOOK:
-        print("Error: Webhook link missing in settings.")
+        print("Error: DISCORD_WEBHOOK environment variable is empty!")
         return
-    
-    public_url = "https://shop.amul.com/en/product/amul-high-protein-rose-lassi-200-ml-or-pack-of-30"
     payload = {
-        "content": f"🚨 **AMUL RESTOCK DETECTED!** 🚨\n📦 **Item:** {item_title}\n🛒 **Buy now:** {public_url}"
+        "content": f"🚀 **Amul stock update!** The High-Protein Rose Lassi is back! Check here: {URL}"
     }
     requests.post(DISCORD_WEBHOOK, json=payload)
-    print("True alert sent to Discord successfully.")
+    print("Discord alert fired!")
 
 if __name__ == "__main__":
     check_stock()
