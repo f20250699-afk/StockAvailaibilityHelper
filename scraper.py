@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # 1. Paste your exact Amul product link inside the quotes below!
-URL = "https://shop.amul.com/en/product/paste-your-exact-amul-item-link-here" 
+URL = "https://shop.amul.com/en/product/amul-high-protein-rose-lassi-200-ml-or-pack-of-30" 
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 
 def check_stock():
