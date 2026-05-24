@@ -3,7 +3,6 @@ import cloudscraper
 import requests
 from bs4 import BeautifulSoup
 
-# Back to the actual product page
 URL = "https://shop.amul.com/en/product/amul-high-protein-rose-lassi-200-ml-or-pack-of-30" 
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 
@@ -26,7 +25,6 @@ def check_stock():
     soup = BeautifulSoup(response.text, 'html.parser')
     page_text = soup.get_text().lower()
 
-    # Diagnostic check: Let's see if we actually got the full page this time
     char_count = len(page_text)
     print(f"Webpage data fetched. Total character count: {char_count}")
 
